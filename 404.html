@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toko Korek Pro</title>
+
+<style>
+body {
+  font-family: Arial;
+  margin: 0;
+  background: #f5f5f5;
+}
+
+header {
+  background: #cf0707;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.search-box {
+  padding: 10px;
+  text-align: center;
+}
+.search-box input {
+  width: 80%;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+
+.toko {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.produk {
+  flex: 3;
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+  gap: 15px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  transition: 0.2s;
+}
+.card:hover { transform: scale(1.03); }
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.card button {
+  width: 100%;
+  padding: 8px;
+  background: #e10707;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: red;
+  color: white;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+
+.laris {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: orange;
+  color: white;
+  padding: 3px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+
+.rating {
+  color: gold;
+  font-size: 14px;
+}
+
+/* CART */
+.cart-box {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+}
+
+.cart-item {
+  border-bottom: 1px solid #eee;
+  padding: 5px 0;
+}
+
+.qty-btn {
+  margin: 2px;
+  padding: 2px 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+  background: white;
+  margin: 10% auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.review {
+  text-align: left;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+}
+
+@media(max-width: 768px){
+  .toko { flex-direction: column; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Toko Korek 🔥</h1>
+</header>
+
+<div class="search-box">
+<input type="text" id="search" placeholder="Cari produk...">
+</div>
+
+<div class="toko">
+
+<div class="produk" id="produkList"></div>
+
+<div class="cart-box">
+<h3>🛒 Keranjang</h3>
+<div id="cart"></div>
+<h4 id="total">Total: Rp0</h4>
+<button onclick="checkout()">Beli</button>
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="tutupModal()">✖</span>
+    <img id="modalImg">
+    <h3 id="modalNama"></h3>
+    <div id="modalRating"></div>
+    <p id="modalHarga"></p>
+    <p id="modalDesk"></p>
+
+    <div id="modalReview"></div>
+
+    <button onclick="tambahDariModal()">+ Keranjang</button>
+  </div>
+</div>
+
+<script>
+
+const produk = [
+ {nama:"Korek Gas", harga:5000, img:"https://th.bing.com/th/id/OIP.3tkqYdslQAhqE7weYxmp2AHaHa", desk:"Korek gas standar.", rating:4, laris:true,
+  review:["Murah dan awet 👍","Worth it banget"]},
+
+ {nama:"Korek Unik", harga:15000, img:"https://th.bing.com/th/id/OIP.hIdU3foVIbcCJZUwujJytQHaHa", desk:"Desain unik.", rating:5,
+  review:["Keren banget 🔥","Teman saya suka"]},
+
+ {nama:"Korek Modern", harga:20000, img:"https://images.tokopedia.net/img/cache/500-square/hDjmkQ/2022/6/2/8a117893-3c9b-437e-b585-045552512dc7.jpg", desk:"Model kekinian.", rating:4,
+  review:["Bagus tampilannya","Elegant"]},
+
+ {nama:"Korek Elektrik", harga:25000, img:"https://th.bing.com/th/id/OIP.8KkB3823V3oTf2oYWI8xGQHaHa", desk:"Tanpa api.", rating:5, laris:true,
+  review:["Canggih banget","Anti angin"]},
+
+ {nama:"Korek LED", harga:28000, img:"https://th.bing.com/th/id/OIP.Wl1ZpMiK_P9WK1C2YvYKBwHaHa", desk:"Lampu LED.", rating:4,
+  review:["Unik","Nyala terang"]},
+
+ {nama:"Korek Plasma", harga:30000, img:"https://th.bing.com/th/id/OIP.KFQZy7WleiBpdjJ-d62smgHaHa", desk:"Teknologi plasma.", rating:5, laris:true,
+  review:["Premium banget","Rekomended 🔥"]}
+];
+
+function bintang(r){
+  return "⭐".repeat(r);
+}
+
+function loadProduk(filter=""){
+  let html="";
+  produk
+    .filter(p => p.nama.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((p,i)=>{
+      html += `
+        <div class="card">
+          <span class="badge">Promo</span>
+          ${p.laris ? `<span class="laris">🔥 Laris</span>` : ``}
+          <img src="${p.img}" onclick="lihatDetail(${i})">
+          <h4>${p.nama}</h4>
+          <div class="rating">${bintang(p.rating)}</div>
+          <p>Rp${p.harga}</p>
+          <button onclick="tambahKeranjang('${p.nama}',${p.harga})">+ Keranjang</button>
+        </div>
+      `;
+    });
+
+  document.getElementById("produkList").innerHTML = html;
+}
+
+document.getElementById("search").addEventListener("input", e=>{
+  loadProduk(e.target.value);
+});
+
+let keranjang = JSON.parse(localStorage.getItem("cart")) || [];
+
+function simpan(){
+  localStorage.setItem("cart", JSON.stringify(keranjang));
+}
+
+function tambahKeranjang(nama,harga){
+  let item = keranjang.find(i=>i.nama===nama);
+  if(item){ item.qty++; }
+  else { keranjang.push({nama,harga,qty:1}); }
+  simpan();
+  renderCart();
+}
+
+function renderCart(){
+  let html="";
+  let total=0;
+
+  keranjang.forEach((item,i)=>{
+    total += item.harga * item.qty;
+
+    html += `
+      <div class="cart-item">
+        <b>${item.nama}</b><br>
+        Rp${item.harga} x ${item.qty}<br>
+        <button class="qty-btn" onclick="kurang(${i})">-</button>
+        <button class="qty-btn" onclick="tambah(${i})">+</button>
+        <button class="qty-btn" onclick="hapus(${i})">x</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("cart").innerHTML = html;
+  document.getElementById("total").innerText = "Total: Rp"+total;
+}
+
+function tambah(i){ keranjang[i].qty++; simpan(); renderCart(); }
+function kurang(i){
+  if(keranjang[i].qty>1){ keranjang[i].qty--; }
+  else { keranjang.splice(i,1); }
+  simpan(); renderCart();
+}
+function hapus(i){ keranjang.splice(i,1); simpan(); renderCart(); }
+
+let produkDipilih=null;
+
+function lihatDetail(i){
+  let p = produk[i];
+  produkDipilih = p;
+
+  document.getElementById("modal").style.display="block";
+  document.getElementById("modalImg").src = p.img;
+  document.getElementById("modalNama").innerText = p.nama;
+  document.getElementById("modalHarga").innerText = "Rp"+p.harga;
+  document.getElementById("modalDesk").innerText = p.desk;
+  document.getElementById("modalRating").innerText = bintang(p.rating);
+
+  let reviewHTML="";
+  p.review.forEach(r=>{
+    reviewHTML += `<div class="review">💬 ${r}</div>`;
+  });
+
+  document.getElementById("modalReview").innerHTML = reviewHTML;
+}
+
+function tutupModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+function tambahDariModal(){
+  tambahKeranjang(produkDipilih.nama, produkDipilih.harga);
+  tutupModal();
+}
+
+function checkout(){
+let pesan = "Halo, saya ingin memesan:\n";
+let total=0;
+
+keranjang.forEach(item=>{
+    pesan += `- ${item.nama} x${item.qty} (Rp${item.harga})\n`;
+    total += item.harga * item.qty;
+});
+
+pesan += `\nTotal: Rp${total}`;
+
+let url = "https://wa.me/6289521255364?text=" + encodeURIComponent(pesan);
+window.open(url);
+alert("Pesanan dikirim!");
+}
+
+loadProduk();
+renderCart();
+
+</script>
+
+</body>
+</html>
